@@ -5,7 +5,7 @@ public class AssetGenerator : MonoBehaviour
 {
     [Header("Список карт для GameManager")]
     public List<Item> generatedCards = new List<Item>();
-
+ 
     private void Awake()
     {
         GenerateCards();

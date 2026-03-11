@@ -65,7 +65,8 @@ public class GameManager : MonoBehaviour
     // ========== ГЛОБАЛЬНЫЕ ПУЛЫ ==========
     [Header("=== ГЛОБАЛЬНЫЙ ПУЛ КАРТ ===")]
     [Tooltip("ПЕРЕТАЩИ СЮДА ВСЕ КАРТЫ ИЗ ПАПКИ Resources/Cards")]
-    [SerializeField] public List<Item> allCards = new List<Item>();
+    //[SerializeField] public List<Item> allCards = new List<Item>();
+    [SerializeField] private AssetGenerator assetGenerator; //добавляем генератор карт в гейм менеджер
 
     [Header("=== ГЛОБАЛЬНЫЙ ПУЛ МОНСТРОВ ===")]
     [Tooltip("ПЕРЕТАЩИ СЮДА ВСЕХ МОНСТРОВ (префабы) ИЗ ПАПКИ Resources/Monsters")]
@@ -146,6 +147,7 @@ public class GameManager : MonoBehaviour
 
         // ======== НОВОЕ: выдаём стартовые карты ========
         var startCards = GameManager.Instance.GetRandomCards(startInventorySize);
+
         foreach (var card in startCards)
         {
             CurrentPlayer.AddItem(card);
@@ -171,18 +173,30 @@ public class GameManager : MonoBehaviour
         Debug.Log("📊 ПРОВЕРКА РЕСУРСОВ:");
         Debug.Log($"📦 Карт загружено: {allCards.Count}");
 
-        if (allCards.Count == 0)
+        //if (allCards.Count == 0)
+        //{
+        //    Debug.LogWarning("⚠ Нет карт! Загрузи карты в allCards в инспекторе!");
+        //    // Пытаемся загрузить из Resources
+        //    LoadCardsFromResources();
+
+        //}
+        //else
+        //{
+        //    foreach (var card in allCards)
+        //    {
+        //        Debug.Log($"   - {card.itemName}");
+        //    }
+        //} на всякий оставлю, что бы иметь возможность сбросить 
+
+        if (assetGenerator != null)
         {
-            Debug.LogWarning("⚠ Нет карт! Загрузи карты в allCards в инспекторе!");
-            // Пытаемся загрузить из Resources
-            LoadCardsFromResources();
+            // Используем assetGenerator
+            var cards = assetGenerator.generatedCards;
+            Debug.Log($"Количество карт: {cards.Count}");
         }
         else
         {
-            foreach (var card in allCards)
-            {
-                Debug.Log($"   - {card.itemName}");
-            }
+            Debug.LogError("AssetGenerator не назначен в Inspector!");
         }
 
         Debug.Log($"👾 Монстров загружено: {allMonsters.Count}");
@@ -204,11 +218,11 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Загрузка карт из папки Resources (на случай, если забыли добавить в инспектор)
     /// </summary>
-    private void LoadCardsFromResources()
-    {
-        Debug.Log("Пытаюсь загрузить карты из Resources/Cards...");
-        // TODO: фронтендщик должен положить карты в папку Resources
-    }
+    //private void LoadCardsFromResources()
+    //{
+    //    Debug.Log("Пытаюсь загрузить карты из Resources/Cards...");
+    //    // TODO: фронтендщик должен положить карты в папку Resources
+    //}
 
     /// <summary>
     /// Загрузка монстров из папки Resources
@@ -265,7 +279,8 @@ public class GameManager : MonoBehaviour
             {
                 if (allCards.Count > 0)
                 {
-                    Item cardPrefab = allCards[UnityEngine.Random.Range(0, allCards.Count)];
+                    //меняю на assetGenerator
+                    Item cardPrefab = assetGenerator[UnityEngine.Random.Range(0, assetGenerator.generatedcard.Count)];
                     // Создаем копию карты
                     Item cardCopy = CreateCardCopy(cardPrefab);
                     chestItems.Add(cardCopy);
@@ -488,8 +503,8 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public Item GetRandomCard()
     {
-        if (allCards.Count == 0) return null;
-        return allCards[UnityEngine.Random.Range(0, allCards.Count)];
+        if (assetGenerator.generatedCard.Count == 0) return null;
+        return allCards[UnityEngine.Random.Range(0, assetGenerator.generatedCard.Count)];
     }
 
     /// <summary>
@@ -553,42 +568,4 @@ public enum GameState
     Paused,         // Пауза
     GameOver,       // Поражение
     Victory         // Победа
-}
-
-// =============================================
-// ДОПОЛНИТЕЛЬНЫЙ МЕНЕДЖЕР ДЛЯ ТЕСТИРОВАНИЯ
-// =============================================
-public class TestGameManager : MonoBehaviour
-{
-    [Header("ТЕСТОВЫЕ НАСТРОЙКИ")]
-    public bool autoStartGame = true;
-
-    private void Start()
-    {
-        if (autoStartGame)
-        {
-            // Запускаем тестовую игру через 1 секунду
-            Invoke("StartTestGame", 1f);
-        }
-    }
-
-    private void StartTestGame()
-    {
-        Debug.Log("🧪 ЗАПУСК ТЕСТОВОЙ ИГРЫ");
-        GameManager.Instance.StartNewGame();
-
-        // Добавляем тестовые карты игроку
-        var player = GameManager.Instance.CurrentPlayer;
-
-        // Создаем тестовые карты
-        var fireball = new AttackCard("Огненный шар", 8, DamageType.Fire);
-        var heal = new HealCard("Зелье лечения", 10, false);
-        var rage = new BuffCard("Ярость", BuffEffectType.PlayerDamageBuff, 3, 3);
-
-        player.AddItem(fireball);
-        player.AddItem(heal);
-        player.AddItem(rage);
-
-        Debug.Log("🧪 Тестовые карты добавлены игроку");
-    }
 }
